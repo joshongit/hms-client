@@ -1,5 +1,5 @@
 # React + TypeScript + Vite
-# Auther : Raja
+# Auther : Raja.S
 
 ## Logto Redirect URI Setup
 
