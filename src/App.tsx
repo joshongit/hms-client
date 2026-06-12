@@ -573,6 +573,8 @@ function App() {
               timezoneOptions={TIMEZONE_OPTIONS}
               getApiAccessToken={getApiAccessToken}
               backendBaseUrl={BACKEND_BASE_URL}
+              canClose={orgs.length > 0}
+              onClose={() => setShowCreateOrg(false)}
               onComplete={(org) => {
                 setOrgs(prev => [...prev, org])
                 setSelectedOrg(org)

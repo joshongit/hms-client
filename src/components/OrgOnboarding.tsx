@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
-import { Check, ArrowRight, ArrowLeft, Tag, Info, Loader2 } from 'lucide-react'
+import { Check, ArrowRight, ArrowLeft, Tag, Info, Loader2, X } from 'lucide-react'
 
 interface Org {
   org_id: string | number
@@ -13,6 +13,8 @@ interface OrgOnboardingProps {
   backendBaseUrl: string
   onComplete: (org: Org) => void
   onDeleteOrg?: (org: Org) => Promise<void>
+  canClose?: boolean
+  onClose?: () => void
 }
 
 type OnboardingStep = 'org-setup' | 'creating-org' | 'provisioning' | 'institution-details' | 'compliance'
@@ -58,6 +60,8 @@ export default function OrgOnboarding({
   getApiAccessToken,
   backendBaseUrl,
   onComplete,
+  canClose = false,
+  onClose,
 }: OrgOnboardingProps) {
   const [step, setStep] = useState<OnboardingStep>(() => {
     return readStoredStep() ?? 'org-setup'
@@ -582,11 +586,27 @@ export default function OrgOnboarding({
       </div>
     ) : null
 
+  const CloseButton = () => {
+    if (!canClose || !onClose) return null
+
+    return (
+      <button
+        type="button"
+        onClick={onClose}
+        aria-label="Close organization setup"
+        className="absolute right-5 top-5 z-50 p-2 rounded-lg border border-gray-200 bg-white text-gray-500 hover:text-gray-800 hover:bg-gray-50 transition"
+      >
+        <X className="w-4 h-4" />
+      </button>
+    )
+  }
+
   // ─── Page 1: Workspace Setup ───────────────────────────────────────────────
 
   if (effectiveStep === 'org-setup' || effectiveStep === 'creating-org') {
     return (
-      <div className="min-h-screen flex bg-white text-gray-900">
+      <div className="min-h-screen flex bg-white text-gray-900 relative">
+        <CloseButton />
         <Sidebar />
         <div className="flex-1 flex flex-col">
           <div className="flex-1 flex flex-col justify-center px-8 md:px-16 py-12 max-w-2xl w-full mx-auto">
@@ -697,7 +717,8 @@ export default function OrgOnboarding({
   if (effectiveStep === 'provisioning') {
     console.log('🎨 Rendering provisioning screen. Error state:', error)
     return (
-      <div className="min-h-screen flex bg-white text-gray-900">
+      <div className="min-h-screen flex bg-white text-gray-900 relative">
+        <CloseButton />
         <Sidebar />
         <div className="flex-1 flex flex-col items-center justify-center px-8 py-12 gap-8">
           {error ? (
@@ -755,7 +776,8 @@ export default function OrgOnboarding({
   if (effectiveStep === 'institution-details') {
     console.log('🎨 Rendering institution-details screen')
     return (
-      <div className="h-screen flex bg-white text-gray-900 overflow-hidden">
+      <div className="h-screen flex bg-white text-gray-900 overflow-hidden relative">
+        <CloseButton />
         <Sidebar />
         <div className="flex-1 min-w-0 flex flex-col overflow-hidden">
           <div className="flex-1 overflow-y-auto px-8 md:px-16 py-12">
@@ -852,7 +874,8 @@ export default function OrgOnboarding({
   // ─── Page 3: Compliance ────────────────────────────────────────────────────
 
   return (
-    <div className="min-h-screen flex bg-white text-gray-900">
+    <div className="min-h-screen flex bg-white text-gray-900 relative">
+      <CloseButton />
       <Sidebar />
       <div className="flex-1 flex flex-col">
         <div className="flex-1 flex flex-col justify-center px-8 md:px-16 py-12 max-w-2xl w-full mx-auto">

@@ -4,16 +4,19 @@ import {
   PanelLeftClose,
   PanelLeftOpen,
   Plus,
+  Building2,
+  UserPlus,
   Settings,
   LayoutDashboard,
   LogOut,
-  ChevronDown,
   Trash2,
   Key,
   Copy,
   Check,
   Boxes,
+  Users,
 } from 'lucide-react'
+import PatientList from './patients/PatientList'
 
 interface Org {
   org_id: string | number
@@ -54,9 +57,12 @@ export default function HomePage({
 }: HomePageProps) {
   const [sidebarOpen, setSidebarOpen] = useState(true)
   const [profileMenuOpen, setProfileMenuOpen] = useState(false)
+  const [createMenuOpen, setCreateMenuOpen] = useState(false)
   const [tokenCopied, setTokenCopied] = useState(false)
   const [selectedNav, setSelectedNav] = useState<string>('dashboard')
+  const [openPatientCreateSignal, setOpenPatientCreateSignal] = useState(0)
   const profileMenuRef = useRef<HTMLDivElement>(null)
+  const createMenuRef = useRef<HTMLDivElement>(null)
 
   // Build visible nav items:
   // If profilePermissions is empty (null/admin) → show all modules.
@@ -78,6 +84,9 @@ export default function HomePage({
     const handler = (e: MouseEvent) => {
       if (profileMenuRef.current && !profileMenuRef.current.contains(e.target as Node)) {
         setProfileMenuOpen(false)
+      }
+      if (createMenuRef.current && !createMenuRef.current.contains(e.target as Node)) {
+        setCreateMenuOpen(false)
       }
     }
     document.addEventListener('mousedown', handler)
@@ -170,7 +179,6 @@ export default function HomePage({
                     </option>
                   ))}
                 </select>
-                <ChevronDown className="w-3 h-3 text-gray-400 pointer-events-none" />
               </div>
             ) : (
               <span className="px-3 py-1.5 bg-[#eeeeff] border border-[#e8e8f0] rounded-lg text-sm font-semibold text-gray-700 whitespace-nowrap shrink-0">
@@ -180,14 +188,51 @@ export default function HomePage({
           )}
 
           {/* Create (+) */}
-          <button
-            type="button"
-            onClick={onCreateOrg}
-            title="Create new"
-            className="p-2 rounded-lg bg-[#7677f1] text-white hover:bg-[#6566e0] transition shrink-0"
-          >
-            <Plus className="w-4 h-4" />
-          </button>
+          <div className="relative shrink-0" ref={createMenuRef}>
+            <button
+              type="button"
+              onClick={() => setCreateMenuOpen((v) => !v)}
+              title="Create new"
+              aria-label="Create menu"
+              aria-expanded={createMenuOpen}
+              className="p-2 rounded-lg bg-[#7677f1] text-white hover:bg-[#6566e0] transition"
+            >
+              <Plus className="w-4 h-4" />
+            </button>
+
+            {createMenuOpen && (
+              <div className="absolute right-0 top-11 w-44 bg-white rounded-xl shadow-lg border border-[#e2e2e2] py-1.5 z-50">
+                <div className="px-3 pb-1 pt-1.5">
+                  <p className="text-[11px] font-bold tracking-[0.12em] text-gray-500 uppercase">Quick Add</p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setCreateMenuOpen(false)
+                    onCreateOrg()
+                  }}
+                  className="w-full flex items-center gap-2 text-left px-3 py-2 text-sm text-gray-700 hover:bg-[#eeeeff] hover:text-[#7c3aed] transition"
+                >
+                  <Building2 className="w-4 h-4 shrink-0" />
+                  Add Hospital
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setCreateMenuOpen(false)
+                    if (!selectedOrg) return
+                    setSelectedNav('patients')
+                    setOpenPatientCreateSignal((v) => v + 1)
+                  }}
+                  disabled={!selectedOrg}
+                  className="w-full flex items-center gap-2 text-left px-3 py-2 text-sm text-gray-700 hover:bg-[#eeeeff] hover:text-[#7c3aed] transition disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <UserPlus className="w-4 h-4 shrink-0" />
+                  Add Patient
+                </button>
+              </div>
+            )}
+          </div>
 
           {/* Settings */}
           <button
@@ -312,6 +357,20 @@ export default function HomePage({
               <span className="whitespace-nowrap">Dashboard</span>
             </button>
 
+            {/* Patients */}
+            <button
+              type="button"
+              onClick={() => setSelectedNav('patients')}
+              className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-semibold transition ${
+                selectedNav === 'patients'
+                  ? 'bg-[#eeeeff] text-gray-900'
+                  : 'text-gray-600 hover:bg-[#f0f0fb] hover:text-gray-900'
+              }`}
+            >
+              <Users className="w-4 h-4 shrink-0" />
+              <span className="whitespace-nowrap">Patients</span>
+            </button>
+
             {/* Dynamic module nav items */}
             {modules.length === 0 ? (
               // Loading skeleton — shown while modules are still fetching
@@ -353,7 +412,16 @@ export default function HomePage({
         </aside>
 
         {/* Main Content */}
-        <main className="flex-1 overflow-auto bg-white" />
+        <main className="flex-1 overflow-auto bg-white">
+          {selectedNav === 'patients' && selectedOrg && (
+            <PatientList
+              accessToken={accessToken}
+              orgId={String(selectedOrg.org_id)}
+              organizationName={selectedOrg.org_name}
+              openCreateSignal={openPatientCreateSignal}
+            />
+          )}
+        </main>
       </div>
 
     </div>
